@@ -1,0 +1,34 @@
+package co.foodvite.chat.twiliotest;
+
+/**
+ * Created by ravi on 14/6/17.
+ */
+
+import com.twilio.chat.ErrorInfo;
+import com.twilio.chat.StatusListener;
+
+/**
+ * Status listener that shows a toast with operation results.
+ */
+class ToastStatusListener extends StatusListener
+{
+    private final String okText;
+    private final String errorText;
+
+    ToastStatusListener(String ok, String error) {
+        okText = ok;
+        errorText = error;
+    }
+
+    @Override
+    public void onSuccess()
+    {
+        TwilioApplication.get().showToast(okText);
+    }
+
+    @Override
+    public void onError(ErrorInfo errorInfo)
+    {
+        TwilioApplication.get().showError(errorText, errorInfo);
+    }
+}

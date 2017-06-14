@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TwilioTest</string>
+    <string name="client_name">Client Name</string>
+    <string name="sign_in_button">Sign In</string>
+</resources>
