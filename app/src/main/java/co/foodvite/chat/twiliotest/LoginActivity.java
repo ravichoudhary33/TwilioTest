@@ -1,6 +1,7 @@
 package co.foodvite.chat.twiliotest;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
@@ -17,7 +18,7 @@ public class LoginActivity extends AppCompatActivity implements BasicChatClient.
 
     private static final Logger logger = Logger.getLogger(LoginActivity.class);
 
-    private static final String ACCESS_TOKEN_SERVICE_URL = "http://badebdb7.ngrok.io/token";  //ngrok url
+    private static final String ACCESS_TOKEN_SERVICE_URL = "http://eb8f45c5.ngrok.io/token";  //ngrok url
     private static final String    DEFAULT_CLIENT_NAME = "TestUser";
     private ProgressDialog progressDialog;
     private Button login;
@@ -28,8 +29,10 @@ public class LoginActivity extends AppCompatActivity implements BasicChatClient.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // toolbar setup
         Toolbar loginToolbar = (Toolbar) findViewById(R.id.login_toolbar);
         setSupportActionBar(loginToolbar);
+        setTitle("Login Activity");
 
         final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String userName = sharedPreferences.getString("userName", DEFAULT_CLIENT_NAME);
@@ -65,6 +68,8 @@ public class LoginActivity extends AppCompatActivity implements BasicChatClient.
     public void onLoginFinished() {
         progressDialog.dismiss();
         logger.d("Successfully Logged In!");
+        Intent intent = new Intent(this, ChannelActivity.class);
+        startActivity(intent);
     }
 
     @Override
