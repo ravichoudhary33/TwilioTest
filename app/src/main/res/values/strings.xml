@@ -3,4 +3,7 @@
     <string name="client_name">Client Name</string>
     <string name="sign_in_button">Sign In</string>
     <string name="action_search">Search</string>
+    <string name="search_query">Search</string>
+    <string name="action_new_group">New Group</string>
+    <string name="action_setting">Setting</string>
 </resources>
