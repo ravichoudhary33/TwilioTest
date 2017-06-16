@@ -14,11 +14,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.twilio.chat.CallbackListener;
+import com.twilio.chat.ChatClient;
+import com.twilio.chat.ErrorInfo;
+
 public class LoginActivity extends AppCompatActivity implements BasicChatClient.LoginListener {
 
     private static final Logger logger = Logger.getLogger(LoginActivity.class);
 
-    private static final String ACCESS_TOKEN_SERVICE_URL = "http://4203017d.ngrok.io/token";  //ngrok url
+    private static final String TAG = "LoginActivity";
+    private static final String ACCESS_TOKEN_SERVICE_URL = "http://890a317f.ngrok.io/token";  //ngrok url
     private static final String    DEFAULT_CLIENT_NAME = "TestUser";
     private ProgressDialog progressDialog;
     private Button login;
@@ -44,6 +49,7 @@ public class LoginActivity extends AppCompatActivity implements BasicChatClient.
         this.login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 String idChosen = clientNameTextBox.getText().toString();
                 sharedPreferences.edit().putString("userName", idChosen).apply();
 

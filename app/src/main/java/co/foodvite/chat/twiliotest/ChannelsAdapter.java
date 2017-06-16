@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.twilio.chat.CallbackListener;
 import com.twilio.chat.Channel;
+import com.twilio.chat.StatusListener;
 
 import java.util.List;
 
@@ -73,15 +74,21 @@ public class ChannelsAdapter extends RecyclerView.Adapter<ChannelsAdapter.ViewHo
                 // get channel from channels model
                 channelModel.getChannel(new CallbackListener<Channel>() {
                     @Override
-                    public void onSuccess(Channel channel) {
+                    public void onSuccess(final Channel channel) {
+                        // join the channel and send it to message activity
+                        channel.join(new StatusListener() {
+                            @Override
+                            public void onSuccess() {
+                                Log.d("ChannelsAdapter", channel.getSid());
+                                // start Message Activity
+                                Intent i = new Intent(context, MessageActivity.class); // instead of v.getContext()->context can also be used
+                                i.putExtra(Constants.EXTRA_CHANNEL_SID, channel.getSid());
+                                i.putExtra(Constants.EXTRA_CHANNEL, (Parcelable) channel);
+                                // start the activity
+                                context.startActivity(i);
+                            }
+                        });
 
-                        Log.d("ChannelsAdapter", channel.getSid());
-                        // start Message Activity
-                        Intent i = new Intent(context, MessageActivity.class); // instead of v.getContext()->context can also be used
-                        i.putExtra(Constants.EXTRA_CHANNEL_SID, channel.getSid());
-                        i.putExtra(Constants.EXTRA_CHANNEL, (Parcelable) channel);
-                        // start the activity
-                        context.startActivity(i);
                     }
                 });
 

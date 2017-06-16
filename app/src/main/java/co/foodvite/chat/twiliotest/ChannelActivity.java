@@ -1,7 +1,6 @@
 package co.foodvite.chat.twiliotest;
 
 import android.app.AlertDialog;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
@@ -14,20 +13,21 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ListView;
 
 import com.twilio.chat.CallbackListener;
 import com.twilio.chat.Channel;
+import com.twilio.chat.Channel.ChannelType;
 import com.twilio.chat.ChannelDescriptor;
 import com.twilio.chat.Channels;
 import com.twilio.chat.ChatClient;
 import com.twilio.chat.ChatClientListener;
 import com.twilio.chat.ErrorInfo;
-import com.twilio.chat.Member;
-import com.twilio.chat.Members;
-import com.twilio.chat.Message;
+
 import com.twilio.chat.Paginator;
 import com.twilio.chat.User;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,8 +35,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
-import uk.co.ribot.easyadapter.EasyAdapter;
 
 public class ChannelActivity extends AppCompatActivity implements ChatClientListener {
 
@@ -47,10 +47,8 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
     private RecyclerView channelRecyclerView;
 
     private BasicChatClient basicClient;
-   /* private List<ChannelDescriptor> mAdapterContents = new ArrayList<>();
-    private Map<String, ChannelDescriptor> mChannels = new HashMap<>();*/
 
-    private Map<String, ChannelModel> channels = new HashMap<String, ChannelModel>();
+    private Map<String, ChannelModel> channels = new HashMap<>();
     private List<ChannelModel> adapterContents = new ArrayList<>();
     private Channels channelsObject;
 
@@ -78,11 +76,8 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
         basicClient = TwilioApplication.get().getBasicClient();
         basicClient.getChatClient().setListener(ChannelActivity.this);
 
-
-
+        // setup recycler view
         setupRecyclerView();
-
-
 
     }
 
@@ -122,27 +117,17 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
             @Override
             public void onSuccess(Paginator<ChannelDescriptor> channelDescriptorPaginator) {
 
+                // get channels page and store the public channels
                 getChannelsPage(channelDescriptorPaginator);
-                /*for (ChannelDescriptor channel : channelPaginator.getItems()) {
 
-                    // add the channel to the list
-                    mAdapterContents.add(channel);
-
-                    Log.d(TAG, "Channel named: " + channel.getFriendlyName());
-                    channel.getChannel(new CallbackListener<Channel>() {
-                        @Override
-                        public void onSuccess(Channel channel) {
-                            Log.d(TAG, channel.getSid());
-                        }
-                    });
-
-                }*/
             }
         });
 
         channelsObject.getUserChannelsList(new CallbackListener<Paginator<ChannelDescriptor>>() {
             @Override
             public void onSuccess(Paginator<ChannelDescriptor> channelDescriptorPaginator) {
+
+                // get channels pages and store user channels list
                 getChannelsPage(channelDescriptorPaginator);
             }
         });
@@ -309,7 +294,13 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
         TwilioApplication.get().showToast("Transport state changed to "+connectionState.toString());
     }
 
-    // menu inflation
+
+
+    //=============================================================
+    // on options menu selected functionality
+    //=============================================================
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
         getMenuInflater().inflate(R.menu.channel_menu, menu);
@@ -327,23 +318,64 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
         switch (item.getItemId()){
             case R.id.action_new_group:
                 // TODO: create new group
+                createChannelWithType(ChannelType.PUBLIC);
 
-
-                return true;
+                break;
 
             case R.id.action_search:
                 // TODO: do the search
-                return true;
+                break;
 
             case R.id.action_setting:
                 // TODO: show the user setting
-                return true;
+                break;
 
-            default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
-                return super.onOptionsItemSelected(item);
+            case R.id.action_logout:
+                // logout the user
+                basicClient.shutdown();
+                finish();
+                break;
         }
+        // If we got here, the user's action was not recognized.
+        // Invoke the superclass to handle it.
+        return super.onOptionsItemSelected(item);
+    }
+
+    // create a channel with channel type
+    private void createChannelWithType(ChannelType type){
+        Random rand = new Random();
+        int    value = rand.nextInt(50);
+
+        final JSONObject attrs = new JSONObject();
+        try {
+            attrs.put("topic", "testing channel creation with options " + value);
+        } catch (JSONException xcp) {
+            logger.e("JSON exception", xcp);
+        }
+
+        String typ = type == ChannelType.PRIVATE ? "Priv" : "Pub";
+
+        basicClient.getChatClient().getChannels()
+                .channelBuilder()
+                .withFriendlyName(typ + "_TestChannelF_" + value)
+                .withUniqueName(typ + "_TestChannelU_" + value)
+                .withType(type)
+                .withAttributes(attrs)
+                .build(new CallbackListener<Channel>() {
+                    @Override
+                    public void onSuccess(final Channel newChannel)
+                    {
+                        logger.d("Successfully created a channel with options.");
+                        channels.put(newChannel.getSid(), new ChannelModel(newChannel));
+                        refreshChannelList();
+                    }
+
+                    @Override
+                    public void onError(ErrorInfo errorInfo)
+                    {
+                        logger.e("Error creating a channel");
+                    }
+                });
     }
 
 }

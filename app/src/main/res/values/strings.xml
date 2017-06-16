@@ -6,4 +6,9 @@
     <string name="search_query">Search</string>
     <string name="action_new_group">New Group</string>
     <string name="action_setting">Setting</string>
+    <string name="action_logout">Logout</string>
+    <string name="type_message">Type Message</string>
+    <string name="action_invite_member">Invite Member</string>
+    <string name="action_list_member">List Member</string>
+    <string name="action_leave">Leave Group</string>
 </resources>

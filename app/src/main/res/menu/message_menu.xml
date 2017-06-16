@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:tools="http://schemas.android.com/tools"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      tools:context=".MessageActivity">
+
+    <item
+        android:id="@+id/action_invite_memeber"
+        android:title="@string/action_invite_member"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_list_member"
+        android:title="@string/action_list_member"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_leave"
+        android:title="@string/action_leave"
+        app:showAsAction="never" />
+
+
+</menu>
