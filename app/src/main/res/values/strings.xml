@@ -11,4 +11,8 @@
     <string name="action_invite_member">Invite Member</string>
     <string name="action_list_member">List Member</string>
     <string name="action_leave">Leave Group</string>
+    <string name="channel_invite">Invite</string>
+    <string name="channel_invite_message">Invite Message</string>
+    <string name="join">Join</string>
+    <string name="decline">Decline</string>
 </resources>

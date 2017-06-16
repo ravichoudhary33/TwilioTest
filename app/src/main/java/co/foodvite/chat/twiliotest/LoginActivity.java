@@ -23,7 +23,7 @@ public class LoginActivity extends AppCompatActivity implements BasicChatClient.
     private static final Logger logger = Logger.getLogger(LoginActivity.class);
 
     private static final String TAG = "LoginActivity";
-    private static final String ACCESS_TOKEN_SERVICE_URL = "http://890a317f.ngrok.io/token";  //ngrok url
+    private static final String ACCESS_TOKEN_SERVICE_URL = "http://c444cd9f.ngrok.io/token";  //ngrok url
     private static final String    DEFAULT_CLIENT_NAME = "TestUser";
     private ProgressDialog progressDialog;
     private Button login;

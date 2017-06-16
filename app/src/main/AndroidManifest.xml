@@ -38,7 +38,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="co.foodvite.chat.twiliotest.LoginActivity"/>
         </activity>
-        <activity android:name=".MessageActivity">
+        <activity
+            android:name=".MessageActivity"
+            android:parentActivityName=".ChannelActivity">
+
+            <!-- parent activity meta-data support for 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="co.foodvite.chat.twiliotest.ChannelActivity"/>
+
         </activity>
     </application>
 

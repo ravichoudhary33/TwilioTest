@@ -1,6 +1,7 @@
 package co.foodvite.chat.twiliotest;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Handler;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
@@ -187,6 +188,63 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
     // ChatClientListener TODO: showIncomming invite methods needs to be completed
     //=============================================================
 
+
+    private void showIncomingInvite(final Channel channel)
+    {
+        handler.post(new Runnable() {
+            @Override
+            public void run()
+            {
+                if (incomingChannelInvite == null) {
+                    incomingChannelInvite =
+                            new AlertDialog.Builder(ChannelActivity.this)
+                                    .setTitle(R.string.channel_invite)
+                                    .setMessage(R.string.channel_invite_message)
+                                    .setPositiveButton(
+                                            R.string.join,
+                                            new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which)
+                                                {
+                                                    channel.join(new ToastStatusListener(
+                                                            "Successfully joined channel",
+                                                            "Failed to join channel") {
+                                                        @Override
+                                                        public void onSuccess()
+                                                        {
+                                                            super.onSuccess();
+                                                            channels.put(channel.getSid(), new ChannelModel(channel));
+                                                            refreshChannelList();
+                                                        }
+                                                    });
+                                                    incomingChannelInvite = null;
+                                                }
+                                            })
+                                    .setNegativeButton(
+                                            R.string.decline,
+                                            new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which)
+                                                {
+                                                    channel.declineInvitation(new ToastStatusListener(
+                                                            "Successfully declined channel invite",
+                                                            "Failed to decline channel invite") {
+                                                        @Override
+                                                        public void onSuccess()
+                                                        {
+                                                            super.onSuccess();
+                                                        }
+                                                    });
+                                                    incomingChannelInvite = null;
+                                                }
+                                            })
+                                    .create();
+                }
+                incomingChannelInvite.show();
+            }
+        });
+    }
+
     @Override
     public void onChannelJoined(final Channel channel)
     {
@@ -226,7 +284,8 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
     {
         channels.put(channel.getSid(), new ChannelModel(channel));
         refreshChannelList();
-        // TODO: showIncomingInvite(channel);
+        // TODO: showIncomingInvite(channel); completed
+        showIncomingInvite(channel);
     }
 
     @Override
@@ -318,7 +377,7 @@ public class ChannelActivity extends AppCompatActivity implements ChatClientList
         switch (item.getItemId()){
             case R.id.action_new_group:
                 // TODO: create new group
-                createChannelWithType(ChannelType.PUBLIC);
+                createChannelWithType(ChannelType.PRIVATE);
 
                 break;
 

@@ -1,10 +1,19 @@
 package co.foodvite.chat.twiliotest;
 
 import android.content.Intent;
+import android.database.DataSetObserver;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -14,6 +23,7 @@ import com.twilio.chat.Channel;
 import com.twilio.chat.ChannelListener;
 import com.twilio.chat.Channels;
 import com.twilio.chat.Member;
+import com.twilio.chat.Members;
 import com.twilio.chat.Message;
 import com.twilio.chat.Messages;
 
@@ -26,127 +36,199 @@ public class MessageActivity extends AppCompatActivity implements ChannelListene
     // variables declaration
     final static String TAG = "MessageActivity";
     private static final Logger logger = Logger.getLogger(MessageActivity.class);
-    private ListView messageListView;
+
+    private RecyclerView messageRecyclerView;
+    private MessagesAdapter adapter;
+
     private EditText inputText;
-    private Channel mChannel;
-    private List<Message> mMessages = new ArrayList<>();
+    private Channel channel;
+
     private String identity;
+    private ArrayList<MessageItem> messageItemList = new ArrayList<>();
+    private ArrayList<MessageItem> adapterContents = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // create the ui
+
+        setContentView(R.layout.activity_message);
+
+        Toolbar messageToolbar = (Toolbar) findViewById(R.id.message_toolbar);
+        setSupportActionBar(messageToolbar);
+        setTitle("My Channel Name");
+
+        // Get a support ActionBar corresponding to this toolbar
+        ActionBar ab = getSupportActionBar();
+
+        // Enable the Up button
+        ab.setDisplayHomeAsUpEnabled(true);
+
         createUI();
     }
 
     @Override
     protected void onResume(){
         super.onResume();
-
-        /*****************get the intent and set up the recycler view***********************/
         Intent intent = getIntent();
-        if(intent != null){
-            mChannel = intent.getParcelableExtra(Constants.EXTRA_CHANNEL);
-            if(mChannel != null){
-                // TODO: setup the recycler view
-                setTitle(mChannel.getFriendlyName());
-
-                Messages msg = mChannel.getMessages();
-                if(msg != null){
-                    msg.getLastMessages(4, new CallbackListener<List<Message>>() {
-                        @Override
-                        public void onSuccess(List<Message> messages) {
-
-                            for(Message m : messages){
-                                Log.d(TAG, m.getMessageBody());
-                            }
-
-                        }
-                    });
-                }
+        if (intent != null) {
+            channel = intent.getParcelableExtra(Constants.EXTRA_CHANNEL);
+            if (channel != null) {
+                setupRecyclerView(channel);
             }
         }
-        /*************************************************************************************/
-
-//        Messages messagesObject = mChannel.getMessages();
-//        if(messagesObject != null){
-//            Log.d(TAG, "Inside messageObject");
-//            messagesObject.getLastMessages(50, new CallbackListener<List<Message>>() {
-//                @Override
-//                public void onSuccess(List<Message> messages) {
-//                    for(Message msg : messages){
-//                        // save the message
-//                        mMessages.add(msg);
-//                        Log.d(TAG, msg.getSid());
-//
-//                    }
-//                }
-//            });
-//        }
-
-        /*for(Message msg : mMessages){
-            Log.d(TAG, msg.getMessageBody());
-        }*/
 
     }
 
+    private void loadAndShowMessages()
+    {
+        final Messages messagesObject = channel.getMessages();
+        if (messagesObject != null) {
+            messagesObject.getLastMessages(50, new CallbackListener<List<Message>>() {
+                @Override
+                public void onSuccess(List<Message> messagesArray) {
+                    messageItemList.clear();
+                    Members  members = channel.getMembers();
+                    if (messagesArray.size() > 0) {
+                        for (int i = 0; i < messagesArray.size(); i++) {
+                            messageItemList.add(new MessageItem(messagesArray.get(i), members, identity));
+                        }
+                    }
+                    adapterContents.clear();
+                    adapterContents.addAll(messageItemList);
+                    adapter.notifyDataSetChanged();
+                }
+            });
+        }
+    }
+
+
+    // setup the recycler view
+    private void setupRecyclerView(Channel channel){
+
+        messageRecyclerView = (RecyclerView) findViewById(R.id.message_recycler_view);
+        adapter = new MessagesAdapter(this, adapterContents);
+        messageRecyclerView.setAdapter(adapter);
+        // set up layout manager
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        linearLayoutManager.setStackFromEnd(true);
+        messageRecyclerView.setLayoutManager(linearLayoutManager);
+        //messageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        loadAndShowMessages();
+    }
 
     private void createUI(){
 
-        /***************************************************************************/
-        // set the layout
-        setContentView(R.layout.activity_message);
-        /*TextView messageTextView = (TextView) findViewById(R.id.message_text_view);*/
-        // get the toolbar
-        Toolbar messageToolbar = (Toolbar) findViewById(R.id.message_toolbar);
-        setSupportActionBar(messageToolbar);
-        setTitle("My Channel Name");
-        /***************************************************************************/
-
-        if(getIntent() != null){
-
-            String channelSID = getIntent().getStringExtra(Constants.EXTRA_CHANNEL_SID);
-            Log.d(TAG, channelSID);
-            /*messageTextView.setText(channelSID);*/
-            // instanciate the basic chat client and get the identity and reterive the channels
-            //BasicChatClient basicClient = TwilioApplication.get().getBasicClient();
-            //identity = basicClient.getChatClient().getMyIdentity();
-            // log the identity
-            //Log.d(TAG, identity);
-            /*Channels channelsObject = basicClient.getChatClient().getChannels();
-            channelsObject.getChannel(channelSID, new CallbackListener<Channel>() {
+        if (getIntent() != null) {
+            BasicChatClient basicClient = TwilioApplication.get().getBasicClient();
+            identity = basicClient.getChatClient().getMyIdentity();
+            String   channelSid = getIntent().getStringExtra(Constants.EXTRA_CHANNEL_SID);
+            Channels channelsObject = basicClient.getChatClient().getChannels();
+            channelsObject.getChannel(channelSid, new CallbackListener<Channel>() {
                 @Override
-                public void onSuccess(Channel channel) {
-                    mChannel = channel;
-                    Log.d(TAG, mChannel.getFriendlyName());
+                public void onSuccess(final Channel foundChannel)
+                {
+                    channel = foundChannel;
+                    channel.addListener(MessageActivity.this);
+                    MessageActivity.this.setTitle(
+                            ((channel.getType() == Channel.ChannelType.PUBLIC) ? "PUB " : "PRIV ")
+                                    + channel.getFriendlyName());
 
-                    *//*if(mChannel != null){
-                        // TODO: setup the recycler view
-                        setTitle(mChannel.getFriendlyName());
+                    setupRecyclerView(channel);
 
-                        Messages msg = mChannel.getMessages();
-                        msg.getLastMessages(4, new CallbackListener<List<Message>>() {
+                    /*messageRecyclerView = (RecyclerView)findViewById(R.id.message_recycler_view);
+                    if (messageRecyclerView != null) {
+                        messageRecyclerView.setsetTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+                        messageRecyclerView.setStackFromBottom(true);
+                        adapter.registerDataSetObserver(new DataSetObserver() {
                             @Override
-                            public void onSuccess(List<Message> messages) {
-                                Log.d(TAG, String.valueOf(messages.size()));
-                                for(Message m : messages){
-                                    Log.d(TAG, m.getMessageBody());
-                                }
-
+                            public void onChanged()
+                            {
+                                super.onChanged();
+                                messageRecyclerView.setSelection(adapter.getCount() - 1);
                             }
                         });
-                    }*//*
+                    }*/
+                    setupInput();
                 }
-            });*/
+            });
         }
-
-        //Intent intent = getIntent();
-
 
     }
 
+    private void setupInput()
+    {
+        // Setup our input methods. Enter key on the keyboard or pushing the send button
+        EditText inputText = (EditText)findViewById(R.id.message_input_edit_text);
+        inputText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after)
+            {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count)
+            {
+            }
+            @Override
+            public void afterTextChanged(Editable s)
+            {
+                if (channel != null) {
+                    channel.typing();
+                }
+            }
+        });
+
+        inputText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent)
+            {
+                if (actionId == EditorInfo.IME_NULL
+                        && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                    sendMessage();
+                }
+                return true;
+            }
+        });
+
+        findViewById(R.id.message_send_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view)
+            {
+                sendMessage();
+            }
+        });
+    }
+
+    private void sendMessage()
+    {
+        inputText = (EditText)findViewById(R.id.message_input_edit_text);
+        String input = inputText.getText().toString();
+        if (!input.equals("")) {
+            final Messages messagesObject = this.channel.getMessages();
+
+            messagesObject.sendMessage(input, new ToastStatusListener(
+                    "Successfully sent message",
+                    "Error sending message") {
+                @Override
+                public void onSuccess()
+                {
+                    super.onSuccess();
+                    loadAndShowMessages();
+                    // adapter.notifyDataSetChanged();
+                    inputText.setText("");
+                }
+            });
+        }
+
+        inputText.requestFocus();
+    }
+
+
+
     @Override
     public void onMessageAdded(Message message) {
+        setupRecyclerView(this.channel);
 
     }
 
@@ -187,6 +269,7 @@ public class MessageActivity extends AppCompatActivity implements ChannelListene
 
     @Override
     public void onSynchronizationChanged(Channel channel) {
-
+        logger.d("Received onSynchronizationChanged callback " + channel.getFriendlyName());
     }
+
 }
